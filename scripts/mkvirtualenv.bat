@@ -31,14 +31,14 @@
     if defined VIRTUALENV_EXECUTABLE (
         set "venvwrapper.virtualenv_executable=%VIRTUALENV_EXECUTABLE%"
     ) else (
-        set "venvwrapper.virtualenv_executable=virtualenv"
+        set "venvwrapper.virtualenv_executable=python -m venv"
     )
 
 :: print usage if no arguments given
 if [%1]==[] goto:usage
 
 
-setlocal 
+setlocal
 :: virtualenv options that take a paramter
 set "virualenv_param_options=-p --python --extra-search-dir --prompt"
 
@@ -51,8 +51,6 @@ set /a debug=0
         echo time: %TIME%
         set /a ouropt=1
         set /a debug=1
-        :: add verbose mode to virtualenv when in debug mode
-        set "venvargs=%venvargs% -v"
     )
     if [%1]==[-h]       goto:usage
     if [%1]==[--help]   goto:usage
@@ -151,7 +149,7 @@ if not exist "%WORKON_HOME%\*" (
     if defined PYTHONHOME (
         set "venvwrapper.pyhome=%PYTHONHOME%"
     ) else (
-        for /f "usebackq tokens=*" %%a in (`python.exe -c "import sys;print(sys.exec_prefix)"`) do (
+        for /f "usebackq tokens=*" %%a in (`python -c "import sys;print(sys.exec_prefix)"`) do (
             set "venvwrapper.pyhome=%%a"
         )
     )
@@ -172,30 +170,18 @@ if %venvwrapper.debug% equ 1 (
 )
 :: call virtualenv
 pushd "%WORKON_HOME%"
-    "%venvwrapper.virtualenv_executable%" %venvwrapper.virtualenv_args% %venvwrapper.envname% --prompt="(%venvwrapper.envname%) "
+    call %venvwrapper.virtualenv_executable% %venvwrapper.virtualenv_args% %venvwrapper.envname% --prompt="%venvwrapper.envname%"
 popd
 if errorlevel 2 goto:cleanup
 
-:: In activate.bat, keep track of PYTHONPATH.
-:: This should be a change adopted by virtualenv.
->>"%WORKON_HOME%\%venvwrapper.quoteless_envname%\Scripts\activate.bat" (
-    echo.:: In case user makes changes to PYTHONPATH
-    echo.if defined _OLD_VIRTUAL_PYTHONPATH (
-    echo.    set "PYTHONPATH=%%_OLD_VIRTUAL_PYTHONPATH%%"
-    echo.^) else (
-    echo.    set "_OLD_VIRTUAL_PYTHONPATH=%%PYTHONPATH%%"
-    echo.^)
+if %venvwrapper.debug% equ 1 (
+    echo ^<DEBUG workon^>
+    set venvwrapper.
+    echo "workon" %venvwrapper.quoteless_envname%
+    echo ^</DEBUG^>
 )
 
-:: In deactivate.bat, reset PYTHONPATH to its former value
->>"%WORKON_HOME%\%venvwrapper.quoteless_envname%\Scripts\deactivate.bat" (
-    echo.
-    echo.if defined _OLD_VIRTUAL_PYTHONPATH (
-    echo.    set "PYTHONPATH=%%_OLD_VIRTUAL_PYTHONPATH%%"
-    echo.^)
-)
-
-call "%WORKON_HOME%\%venvwrapper.quoteless_envname%\Scripts\activate.bat"
+call workon.bat %venvwrapper.quoteless_envname%
 
 if %venvwrapper.debug% equ 1 (
     echo DEBUG call setprojectdir.bat "%venvwrapper.project_path%"

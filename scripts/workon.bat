@@ -1,5 +1,7 @@
 @echo off
 
+set "_OLD_VIRTUAL_PROMPT=%PROMPT%"
+
 if not defined WORKON_HOME (
     set "WORKON_HOME=%USERPROFILE%\Envs"
 )
